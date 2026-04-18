@@ -1,33 +1,54 @@
 IDENTIFICATION DIVISION.
-       PROGRAM-ID. AleatorioEnter.
+       PROGRAM-ID. GuardarAleatorios.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           *> 1. Relacionamos el nombre interno con el nombre físico del archivo
+           SELECT ARCHIVO-LOG ASSIGN TO "numeros.txt"
+               ORGANIZATION IS LINE SEQUENTIAL.
 
        DATA DIVISION.
+       FILE SECTION.
+       *> 2. Definimos cómo luce una fila dentro del archivo
+       FD  ARCHIVO-LOG.
+       01  REGISTRO-NUMERO.
+           05  VALOR-TXT      PIC 99.
+
        WORKING-STORAGE SECTION.
-       01 SEED            PIC 9(8).
-       01 RANDOM-NUM      PIC V9999.
-       01 RESULTADO       PIC 99.
-       01 TECLA-ENTER     PIC X.
+       01  SEED            PIC 9(8).
+       01  RANDOM-NUM      PIC V9999.
+       01  RESULTADO       PIC 99.
+       01  TECLA-ENTER     PIC X.
 
        PROCEDURE DIVISION.
        MAIN-PROCEDURE.
-           *> Inicializamos la semilla con la hora actual para que varíe
+           *> Abrimos el archivo en modo EXTEND (para añadir al final) 
+           *> o OUTPUT (para crearlo de cero cada vez)
+           OPEN OUTPUT ARCHIVO-LOG.
+
            ACCEPT SEED FROM TIME.
            COMPUTE RANDOM-NUM = FUNCTION RANDOM (SEED).
            
-           DISPLAY "--- Generador de Numeros Aleatorios (1-99) ---".
-           DISPLAY "Presiona ENTER para generar uno nuevo o 'Q' para salir.".
+           DISPLAY "Generando numeros en 'numeros.txt'. 'Q' para salir.".
 
            PERFORM UNTIL TECLA-ENTER = 'Q' OR TECLA-ENTER = 'q'
                ACCEPT TECLA-ENTER
                
                IF TECLA-ENTER NOT = 'Q' AND TECLA-ENTER NOT = 'q'
-                   *> Genera el siguiente número de la secuencia
                    COMPUTE RANDOM-NUM = FUNCTION RANDOM
-                   *> Escalamos el número (0-1) a un rango de 1 a 99
                    COMPUTE RESULTADO = (RANDOM-NUM * 99) + 1
-                   DISPLAY "Numero: " RESULTADO " (Presiona Enter...)"
+                   
+                   DISPLAY "Guardado: " RESULTADO
+                   
+                   *> 3. Movemos el dato al registro y lo escribimos
+                   MOVE RESULTADO TO VALOR-TXT
+                   WRITE REGISTRO-NUMERO
                END-IF
            END-PERFORM.
 
-           DISPLAY "Programa finalizado.".
+           *> ¡Importante! Siempre cerrar el archivo
+           CLOSE ARCHIVO-LOG.
+           DISPLAY "Proceso terminado. Revisa numeros.txt".
            STOP RUN.
+           
